@@ -1,0 +1,41 @@
+---
+- name: Install and Start Apache2 on Ubuntu
+  hosts: linux # Replace with your target Ubuntu host(s) or group
+  gather_facts: true
+
+  tasks:
+    - name: "Update apt cache"
+      ansible.builtin.apt:
+        update_cache: true
+      become: true # This task requires root privileges
+
+    - name: "Install Apache2 package"
+      ansible.builtin.apt:
+        name: apache2
+        state: present # Ensure the package is installed
+      become: true # This task requires root privileges
+      register: apache2_install_result # Register the result
+
+    - name: "Start and enable Apache2 service"
+      ansible.builtin.service:
+        name: apache2
+        state: started # Ensure the service is running
+        enabled: true   # Ensure the service starts automatically on boot
+      become: true # This task requires root privileges
+      register: apache2_service_result # Register the result
+
+    - name: "Allow port 80"
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+      become: true # This task requires root privileges
+      register: apache2_firewall_80_result # Register the result
+
+    - name: "Allow port 443"
+      community.general.ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+      become: true # This task requires root privileges
+      register: apache2_firewall_443_result # Register the result

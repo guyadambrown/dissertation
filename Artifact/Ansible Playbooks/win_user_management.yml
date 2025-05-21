@@ -1,0 +1,44 @@
+---
+- name: "Create admin user"
+  hosts: windows
+  gather_facts: true
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: "Generate a random password"
+      ansible.builtin.set_fact:
+        admin_pass: "{{ lookup('password', '/dev/null', length=20, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
+    - name: "Create a new local user"
+      ansible.windows.win_user:
+        name: "Admin"
+        password: "{{ admin_pass }}"
+        state: present
+        groups: Administrators
+      register: user_creation_result
+
+    - name: "Check if user creation was successful"
+      ansible.builtin.fail:
+        msg: "Failed to create the user {{ new_user }}. Result: {{ user_creation_result }}"
+      when: user_creation_result.failed is defined and user_creation_result.failed
+
+    - name: "Report successful user creation"
+      ansible.builtin.debug:
+        msg: "User Admin created successfully."
+      when:
+        - user_creation_result is not defined or not user_creation_result.failed
+
+    - name: "Disable the local windows administrator account"
+      ansible.windows.win_user:
+        name: Administrator
+        account_disabled: true
+      register: admin_account_result
+    - name: "Check if admin account disabling was successful"
+      ansible.builtin.fail:
+        msg: "Failed to disable the Administrator account. Result: {{ admin_account_result }}"
+      when: admin_account_result.failed is defined and admin_account_result.failed
+    - name: "Report successful admin account disabling"
+      ansible.builtin.debug:
+        msg: "Administrator account disabled successfully."
+      when:
+        - admin_account_result is not defined or not admin_account_result.failed

@@ -1,0 +1,85 @@
+---
+- name: Install fail2ban
+  hosts: linux
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      register: apt_update_result
+
+    - name: Upgrade all system packages
+      ansible.builtin.apt:
+        upgrade: dist
+      register: apt_upgrade_result
+    - name: Check if apt upgrade was successful
+      ansible.builtin.fail:
+        msg: "Failed to upgrade packages using apt. Result: {{ apt_upgrade_result }}"
+      when: apt_upgrade_result.failed is defined and apt_upgrade_result.failed
+    - name: Report successful apt upgrade
+      ansible.builtin.debug:
+        msg: "Packages upgraded successfully using apt."
+      when:
+        - apt_upgrade_result is not defined or not apt_upgrade_result.failed
+
+    - name: Install fail2ban package
+      ansible.builtin.apt:
+        name: fail2ban
+        state: present
+      register: fail2ban_install_result
+
+    - name: Check if fail2ban installation was successful
+      ansible.builtin.fail:
+        msg: "Failed to install fail2ban. Result: {{ fail2ban_install_result }}"
+      when: fail2ban_install_result.failed is defined and fail2ban_install_result.failed
+
+    - name: Report successful fail2ban installation
+      ansible.builtin.debug:
+        msg: "fail2ban installed successfully."
+      when:
+        - fail2ban_install_result is not defined or not fail2ban_install_result.failed
+
+    - name: Start and enable the fail2ban service
+      ansible.builtin.systemd:
+        name: fail2ban
+        state: started
+        enabled: true
+      register: fail2ban_service_result
+
+    - name: Check if fail2ban service started successfully
+      ansible.builtin.fail:
+        msg: "Failed to start the fail2ban service. Result: {{ fail2ban_service_result }}"
+      when: fail2ban_service_result.failed is defined and fail2ban_service_result.failed
+
+    - name: Report successful fail2ban service start
+      ansible.builtin.debug:
+        msg: "fail2ban service started successfully."
+      when:
+        - fail2ban_service_result is not defined or not fail2ban_service_result.failed
+
+    - name: Install unattended-upgrades package
+      ansible.builtin.apt:
+        name: unattended-upgrades
+        state: present
+      register: unattended_upgrades_install_result
+    - name: Check if unattended-upgrades installation was successful
+      ansible.builtin.fail:
+        msg: "Failed to install unattended-upgrades. Result: {{ unattended_upgrades_install_result }}"
+      when: unattended_upgrades_install_result.failed is defined and unattended_upgrades_install_result.failed
+    - name: Enable and start the unattended-upgrades service
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        state: started
+        enabled: true
+      register: unattended_upgrades_service_result
+    - name: Check if unattended-upgrades service started successfully
+      ansible.builtin.fail:
+        msg: "Failed to start the unattended-upgrades service. Result: {{ unattended_upgrades_service_result }}"
+      when: unattended_upgrades_service_result.failed is defined and unattended_upgrades_service_result.failed
+    - name: Report successful unattended-upgrades service start
+      ansible.builtin.debug:
+        msg: "unattended-upgrades service started successfully."
+      when:
+        - unattended_upgrades_service_result is not defined or not unattended_upgrades_service_result.failed

@@ -1,0 +1,34 @@
+---
+- name: "Create admin user"
+  hosts: linux
+  gather_facts: true
+
+  tasks:
+    - name: "Generate a random password"
+      ansible.builtin.set_fact:
+        random_pass: "{{ lookup('password', '/dev/null', length=20, chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') }}"
+
+    - name: "Hash the password"
+      ansible.builtin.set_fact:
+        hashed_pass: "{{ random_pass | password_hash('sha512') }}"
+
+    - name: "Create a new local user"
+      become: true
+      ansible.builtin.user:
+        name: "Admin"
+        password: "{{ hashed_pass }}"
+        update_password: on_create
+        state: present
+        groups: sudo
+        shell: /bin/bash
+      register: user_creation_result
+
+    - name: "Check if user creation was successful"
+      ansible.builtin.fail:
+        msg: "Failed to create the user Admin. Result: {{ user_creation_result }}"
+      when: user_creation_result.failed is defined and user_creation_result.failed
+
+    - name: "Report successful user creation"
+      ansible.builtin.debug:
+        msg: "User Admin created successfully. Temporary password: {{ random_pass }}"
+      when: user_creation_result is not defined or not user_creation_result.failed

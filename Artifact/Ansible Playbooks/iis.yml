@@ -1,0 +1,48 @@
+---
+- name: Install and Start IIS on Windows Server 2022
+  hosts: windows # Replace with your target Windows host(s) or group
+  gather_facts: true
+
+  tasks:
+    - name: Install Web-Server (IIS) feature
+      ansible.windows.win_feature:
+        name: Web-Server # The name of the IIS feature
+        state: present   # Ensure the feature is installed
+      register: iis_install_result # Register the result for potential checks
+
+    - name: Check if IIS feature installation was successful
+      ansible.builtin.fail:
+        msg: "Failed to install the Web-Server (IIS) feature. Result: {{ iis_install_result }}"
+      when: iis_install_result.failed is defined and iis_install_result.failed
+
+    - name: Start the World Wide Web Publishing Service (W3SVC)
+      ansible.windows.win_service:
+        name: W3SVC # The name of the IIS service
+        state: started # Ensure the service is started
+        start_mode: auto
+      register: iis_service_result # Register the result
+
+    - name: Check if W3SVC service started successfully
+      ansible.builtin.fail:
+        msg: "Failed to start the World Wide Web Publishing Service (W3SVC). Result: {{ iis_service_result }}"
+      when: iis_service_result.failed is defined and iis_service_result.failed
+
+    - name: Report successful IIS installation and startup
+      ansible.builtin.debug:
+        msg: "IIS feature installed and W3SVC service started successfully."
+      when:
+        - iis_install_result is not defined or not iis_install_result.failed # Ensure install didn't fail
+        - iis_service_result is not defined or not iis_service_result.failed # Ensure service start didn't fail
+
+    - name: "Allow HTTP and HTTPS traffic through Windows Firewall"
+      community.windows.win_firewall_rule:
+        name: "Allow HTTP and HTTPS"
+        enable: true
+        direction: in
+        action: allow
+        localport: "{{ item }}"
+        protocol: TCP
+      loop:
+        - '80'
+        - '443'
+      register: iis_firewall_result # Register the result

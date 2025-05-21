@@ -1,0 +1,28 @@
+---
+- name: Install all updates and reboot as many times as needed
+  hosts: windows
+  gather_facts: true
+  tasks:
+    - name: Install all updates
+      ansible.windows.win_updates:
+        category_names: '*'
+        reboot: true
+      register: update_result
+
+    - name: Check if updates were installed successfully
+      ansible.builtin.fail:
+        msg: "Failed to install updates. Result: {{ update_result }}"
+      when: update_result.failed is defined and update_result.failed
+
+    - name: Report successful update installation
+      ansible.builtin.debug:
+        msg: "Updates installed successfully."
+      when:
+        - update_result is not defined or not update_result.failed
+
+    - name: Reboot the system if required
+      ansible.windows.win_reboot:
+        msg: "Rebooting after updates installation."
+        pre_reboot_delay: 5
+        post_reboot_delay: 30
+      when: update_result.reboot_required is defined and update_result.reboot_required
