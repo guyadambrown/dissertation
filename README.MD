@@ -2,7 +2,7 @@
 
 This folder contains the Ansible playbooks developed and evaluated as part of the dissertation project:
 
-**"Evaluating the Effectiveness and Limitations of Ansible Automation in Cross-Platform System Administration"**
+**"AUTOMATING SYSTEM ADMINISTRATION"**
 
 ## 📦 Contents
 
