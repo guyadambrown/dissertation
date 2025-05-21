@@ -1,4 +1,4 @@
-# Dissertation Submission – MSc Computer Science (2024–25)
+# Dissertation Submission
 
 ## 📘 Title
 **AUTOMATING SYSTEM ADMINISTRATION**  
